@@ -5,7 +5,7 @@
 This is a fork of the Docker based distribution of CAS for use at Clluc.
 
 Why do we need it? Because the original one doesn't give us out of the box everything we need to have a CAS instance
-for development. At least a self signed certificated has to be added to the keystore in this repo in order for the CAS
+for development. At least a self signed certificated has to be added to the keystore in order for the CAS
 instance to bootstrap in test mode (with default static users available). So for the sake of convenience we have
 forked the original repo and created a more ready to use version for us.
 
