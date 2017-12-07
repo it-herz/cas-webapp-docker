@@ -2,57 +2,46 @@
 
 ## Introduction
 
-This repository hosts the [Docker](https://www.docker.com/) build configuration necessary to build a [CAS](https://github.com/apereo/cas) image. 
-See the `Dockerfile` for more info. 
+This is a fork of the Docker based distribution of CAS for use at Clluc.
 
-## Versions
+Why do we need it? Because the original one doesn't give us out of the box everything we need to have a CAS instance
+for development. At least a self signed certificated has to be added to the keystore in this repo in order for the CAS
+instance to bootstrap in test mode (with default static users available). So for the sake of convenience we have
+forked the original repo and created a more ready to use version for us.
 
-A docker image for CAS server. Images are tagged to match CAS server releases.
+Instructions about how to use it are given in the following sections. For further information about the rest you can
+always refer to the [original repo README file](https://github.com/apereo/cas-webapp-docker).
 
-## Requirements
+## Starting a CAS instance in a breathe
 
-* Docker version `1.9.x` ~ `1.13.x`
+This repo ships a keystore with an already included self signed certificate that will be used to enable access to
+the CAS login page through HTTPS. By default CAS can only be accessed through HTTPS for obvious reasons. In case we
+want to use HTTP for authentication we will need to modify the Docker image ourselves.
 
-## Configuration
+That have implications when using this repo to run a CAS Docker image for local development. Given that HTTPS is the
+only way to access CAS login page, the corresponding redirect URL after a valid login will be forced to be HTTPS as
+well, even if we specify an HTTP one. In case we are running our Stockmind API locally over plain HTTP we will need
+some mean to redirect to the HTTP counterpart.
 
-### Image
+That said, let's now explain the steps to run it.
 
-* The image will be available on the host via ports `8080` and `8443`
-* You must check the `Dockerfile` to ensure the right branch from the [CAS overlay project](https://github.com/apereo/cas-overlay-template) is pulled/cloned.
-* Check the [CAS overlay project](https://github.com/apereo/cas-overlay-template) itself to figure out the targetted CAS release.
+### Building the Docker image
 
-### SSL
+This repo provides with shell scripts that makes things a lot easier for us. Before running the CAS Docker image on
+any given machine for the first time we need to build the Docker image. Given that the build process require several
+steps it is better to do it as an isolated task separated from running a container from the image.
 
-* Update the `thekeystore` file with the server certificate and chain if you need access the CAS server via HTTPS. 
-* The password for the keystore is `changeit`.
-* The build will automatically copy the keystore file to the image. The embedded container packaged in the overlay is pre-configured to use that keystore for HTTPS requests.
-* The build will also auto-copy configuration files under the `etc/cas` directory to the corresponding locations inside the image.
+Creating the Docker image is as easy as running the following command:
 
-## Build [![](https://badge.imagelayers.io/apereo/cas:latest.svg)](https://imagelayers.io/?images=apereo/cas:latest 'apereo cas')
+```./build.sh $CasVersion```
 
-**Make sure** that both `build.sh` and `run.sh` are updated to build the appropriate tag. Docker tags **MUST** correspond
-to CAS server versions.
+CasVersion is 5.1.6 at the time of this writing. You can check the latest one at [Dockerhub](https://hub.docker.com/r/apereo/cas/tags/).
 
-**NOTE:** On windows, you may want to run `bash` first so you can execute shell scripts.
+### Running the Docker image
 
-```bash
-./build.sh $CasVersion
-```
+After building the image, running it is as simple as this:
 
-The image will be built as `apereo/cas:v$CasVersion`.
+```./run.sh $CasVersion```
 
-## Run
-
-```bash
-./run.sh $CasVersion
-```
-
-## Release
-
-* New images shall be released at the time of a new CAS server release.
-* Image versions are reflected in the `build|run.sh` files and need to be updated per CAS/Image release.
-* Images are published to [https://hub.docker.com/r/apereo/cas/](https://hub.docker.com/r/apereo/cas/)
-
-```bash
-./push.sh $CasVersion
-```
+It will take several seconds for the container to start. Once started, we can access the running CAS instance [locally
+via port 8443 through HTTPS](https://localhost:8443/cas).
