@@ -1,0 +1,8 @@
+{
+  "@class" : "org.apereo.cas.services.RegexRegisteredService",
+  "serviceId" : "http://.*",
+  "name" : "HTTP",
+  "id" : 10000003,
+  "description" : "This service definition authorizes all application urls that support HTTP protocols.",
+  "evaluationOrder" : 10000
+}

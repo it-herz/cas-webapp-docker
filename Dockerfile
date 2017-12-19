@@ -71,4 +71,4 @@ ENV PATH $PATH:$JAVA_HOME/bin:.
 
 RUN ./mvnw clean package -T 10
 
-CMD ["/cas-overlay/bin/run-cas.sh"]
+CMD ["/bin/bash"]
