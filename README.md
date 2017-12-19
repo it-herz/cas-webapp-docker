@@ -14,7 +14,7 @@ always refer to the [original repo README file](https://github.com/apereo/cas-we
 
 ## Starting a CAS instance in a breathe
 
-This repo ships a keystore with an already included self signed certificate that will be used to enable access to
+First of all, a keystore with a self signed certificate has to be generated. It will be used to enable access to
 the CAS login page through HTTPS. By default CAS can only be accessed through HTTPS for obvious reasons. In case we
 want to use HTTP for authentication we will need to modify the Docker image ourselves.
 
@@ -24,6 +24,24 @@ well, even if we specify an HTTP one. In case we are running our Stockmind API l
 some mean to redirect to the HTTP counterpart.
 
 That said, let's now explain the steps to run it.
+
+### Create a new certificate
+
+```openssl req -x509 -nodes -config configuracion.cnf -newkey rsa:2048 -sha256 -out cert.crt -keyout cert.key```
+
+### Tomcat currently operates only on JKS, PKCS11 or PKCS12 format keystores. The following command will create a PKCS12 using the certificate and private key
+
+```openssl pkcs12 -export -in cert.crt -inkey cert.key -out keystore.p12 -name cas -CAfile my_ca_bundle.crt -caname root```
+
+### Create the keystore
+
+```keytool -importkeystore -deststorepass changeit -destkeypass changeit -destkeystore thekeystore -srckeystore keystore.p12 -srcstoretype PKCS12 -srcstorepass changeit -alias cas```
+
+### Import the keystore to our local keystore
+
+```sudo keytool -importkeystore -deststorepass changeit -destkeypass changeit -destkeystore [JAVA_HOME]/jre/lib/security/cacerts  -srckeystore keystore.p12 -srcstoretype PKCS12 -srcstorepass changeit -alias cas```
+
+and restart the app.
 
 ### Building the Docker image
 
@@ -35,13 +53,31 @@ Creating the Docker image is as easy as running the following command:
 
 ```./build.sh $CasVersion```
 
-CasVersion is 5.1.6 at the time of this writing. You can check the latest one at [Dockerhub](https://hub.docker.com/r/apereo/cas/tags/).
+CasVersion is 5.2.0 at the time of this writing. You can check the latest one at [Dockerhub](https://hub.docker.com/r/apereo/cas/tags/).
 
 ### Running the Docker image
 
 After building the image, running it is as simple as this:
 
 ```./run.sh $CasVersion```
+
+Since some extra configuration is needed to add our service, the image has been changed to run a bash. The next steps has to be done in the container.
+
+### Clean and package the war before adding the services
+
+```./build.sh package```
+
+### Add our service 
+
+```cp etc/cas/services/stockmind.json target/war/work/org.apereo.cas/cas-server-webapp-tomcat/WEB-INF/classes/services/```
+
+### Package the war
+
+```./mvnw package```
+
+### Run the war
+
+```java -jar target/cas.war```
 
 It will take several seconds for the container to start. Once started, we can access the running CAS instance [locally
 via port 8443 through HTTPS](https://localhost:8443/cas).
